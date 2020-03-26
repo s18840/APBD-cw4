@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.SqlClient;
 using cw3.DAL;
 using cw3.Models;
@@ -20,24 +21,31 @@ namespace cw3.Controllers
         [HttpGet]
         public IActionResult GetStudents()
         {
-            using (var client = new SqlConnection("[Data Source=db-mssql;Initial Catalog=s18840;Integrated Security=True]"))
+            var students = new List<Student>();
+            using (var client = new SqlConnection("Data Source=db-mssql;Initial Catalog=s18840;Integrated Security=True"))
                 using(var com=new SqlCommand())
             {
                 com.Connection = client;
-                com.CommandText = "select * from Student as s Inner Join Enrollment as e On s.IdEnrollment=e.IdEnrollment Inner Join Studies as st On e.IdStudy=st.IdStudy;";
+                com.CommandText = "select IndexNumber, FirstName, LastName, BirthDate, Name, Semester from student as s Inner Join Enrollment as e On s.IdEnrollment=e.IdEnrollment Inner Join Studies as st On e.IdStudy=st.IdStudy;";
+                
                 client.Open();
                 var dr = com.ExecuteReader();
+
                 while (dr.Read())
                 {
                     var st = new Student();
+                    st.IndexNumer = dr["IndexNumber"].ToString();
+                    //st.IndexNumber = dr["IndexNumber"].ToString();
                     st.FirstName = dr["FirstName"].ToString();
                     st.LastName = dr["LastName"].ToString();
                     st.BirthDate = dr["BirthDate"].ToString();
+
                     st.Name = dr["Name"].ToString();
                     st.Semester = dr["Semester"].ToString();
+                    students.Add(st);
                 }
             }
-                return Ok(_dbService.GetStudents());
+                return Ok(students);
         }
 
         [HttpGet("{id}")]
@@ -49,7 +57,7 @@ namespace cw3.Controllers
         [HttpPost]
         public IActionResult CreateStudent (Student student)
         {
-            student.IndexNumber = $"s{new Random().Next(1, 20000)}";
+            student.IndexNumer = $"s{new Random().Next(1, 20000)}";
             return Ok(student);
         }
 
