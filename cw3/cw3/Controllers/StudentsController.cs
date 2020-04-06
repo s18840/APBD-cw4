@@ -21,6 +21,7 @@ namespace cw3.Controllers
         [HttpGet]
         public IActionResult GetStudents()
         {
+            //string id = "s1234";
             var students = new List<Student>();
             using (var client = new SqlConnection("Data Source=db-mssql;Initial Catalog=s18840;Integrated Security=True"))
                 using(var com=new SqlCommand())
@@ -39,7 +40,6 @@ namespace cw3.Controllers
                     st.FirstName = dr["FirstName"].ToString();
                     st.LastName = dr["LastName"].ToString();
                     st.BirthDate = dr["BirthDate"].ToString();
-
                     st.Name = dr["Name"].ToString();
                     st.Semester = dr["Semester"].ToString();
                     students.Add(st);
@@ -49,10 +49,34 @@ namespace cw3.Controllers
         }
 
         [HttpGet("{id}")]
-    public IActionResult GetStudent (int id)
+        public Student GetStudent(string id)
         {
-            _dbService.GetStudents();
-            return NotFound("Nie znaleziono studenta");
+            using (var client = new SqlConnection("Data Source=db-mssql;Initial Catalog=s18840;Integrated Security=True"))
+            using (var command = new SqlCommand())
+            {
+                command.Connection = client;
+                command.CommandText = "SELECT FirstName, LastName, IndexNumber, BirthDate, Student.IdEnrollment, Studies.Name, Enrollment.Semester FROM Student INNER JOIN Enrollment ON Student.IdEnrollment = Enrollment.IdEnrollment INNER JOIN Studies ON Enrollment.IdStudy = Studies.IdStudy WHERE Student.IndexNumber=@id";
+                command.Parameters.AddWithValue("id", id);
+
+                Student st = null;
+                client.Open();
+                var dr = command.ExecuteReader();
+                if (dr.Read())
+                {
+                    st = new Student
+                    {
+                        FirstName = dr["FirstName"].ToString(),
+                        LastName = dr["LastName"].ToString(),
+                        IndexNumer = dr["IndexNumber"].ToString(),
+                        BirthDate = dr["BirthDate"].ToString(),
+                        Semester = dr["Semester"].ToString(),
+                        StudiesName = dr["Name"].ToString()
+                    };
+                }
+
+                return st;
+
+            }
         }
         [HttpPost]
         public IActionResult CreateStudent (Student student)
